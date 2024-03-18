@@ -2,6 +2,8 @@ package connectors
 
 import (
 	"database/sql"
+	"encoding/json"
+	"example/hello/services/data/serde"
 	"fmt"
 	"io"
 
@@ -12,9 +14,10 @@ const db_file string = "gradientfs.db"
 
 type Sqlite3Connector struct {
     db *sql.DB
+    ser serde.Serializer
 }
 
-func NewSqlite() *Sqlite3Connector {
+func New(ser serde.Serializer) *Sqlite3Connector {
     db, err := sql.Open("sqlite3", db_file)
     if err != nil {
         panic(err)
@@ -22,26 +25,38 @@ func NewSqlite() *Sqlite3Connector {
 
     return &Sqlite3Connector{
     	db: db,
+        ser: ser,
     }
 }
 
 func (s *Sqlite3Connector) Read(fid int) []byte {
-    row := s.db.QueryRow("SELECT content FROM files WHERE id=?", fid)
+    row := s.db.QueryRow("SELECT column_names, content FROM files WHERE id=?", fid)
+    cols := *new(string)
     content := *new([]byte)
-    err := row.Scan(&content)
+    err := row.Scan(&cols, &content)
     if err != nil {
         panic(err)
     }
+    fmt.Println(cols)
     return content
 }
 
 func (s *Sqlite3Connector) Write(did int, name string, size int64, reader io.Reader) {
-    content, err := io.ReadAll(reader)
+    fmt.Println("writing")
+    ser, cols, schema := s.ser.Serialize(reader)
+    fmt.Printf("%v\n", schema)
+
+    content, err := io.ReadAll(ser)
     if err != nil {
         panic(err)
     }
 
-    _, err = s.db.Exec("INSERT INTO files (directory_id, name, size, content) VALUES (?, ?, ?, ?)", did, name, size, content)
+    mCols, err := json.Marshal(cols)
+    if err != nil {
+        panic(err)
+    }
+
+    _, err = s.db.Exec("INSERT INTO files (directory_id, name, size, column_names, content) VALUES (?, ?, ?, ?, ?)", did, name, size, mCols, content)
     if err != nil {
         panic(err)
     }

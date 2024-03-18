@@ -2,6 +2,8 @@ package data
 
 import (
 	"example/hello/services/data/connectors"
+	"example/hello/services/data/serde"
+	"fmt"
 	"io"
 )
 
@@ -18,11 +20,12 @@ type DataResource struct {
 
 func NewSqlite() DataService {
     return &DataResource{
-        connector: connectors.NewSqlite(),
+        connector: connectors.New(&serde.ArrowSerializer{}),
     }
 }
 
 func (r *DataResource) Write(did int, name string, size int64, content io.Reader) {
+    fmt.Printf("Writing new file: %s\n", name)
     r.connector.Write(did, name, size, content)
 }
 
@@ -35,5 +38,6 @@ func (r *DataResource) Read(fid int) []byte {
 }
 
 func (r *DataResource) Delete(fid int) {
+    fmt.Printf("Deleting file: %d\n", fid)
     r.connector.Delete(fid)
 }
