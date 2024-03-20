@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-    "strings"
+	"strings"
 
 	"github.com/apache/arrow/go/v16/arrow"
 	"github.com/apache/arrow/go/v16/arrow/csv"

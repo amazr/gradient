@@ -1,0 +1,38 @@
+package preview 
+
+import (
+    "fmt"
+);
+
+templ Preview(read_only bool, fid string, cols []string, rows [][]any) {
+    <table class="table">
+        <thead>
+            <tr>
+                for _, col_name := range cols {
+                    <th scope="col">{ col_name }</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            for ri, row := range rows {
+                <tr>
+                    for vi, val := range row {
+                        <td
+                            onkeydown="return event.keyCode != 13"
+                            hx-trigger="keyup[keyCode==13]"
+                            hx-post={ string(templ.URL(fmt.Sprintf("/update/%s/%d/%d", fid, vi, ri+1))) }
+                            hx-include="this"
+                        >
+                            <input
+                                disabled?={ read_only }
+                                style="all: unset; width:100%;"
+                                name="content"
+                                value={ fmt.Sprintf("%v", val) }
+                            />
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}

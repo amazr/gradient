@@ -5,13 +5,14 @@ import (
 	"example/hello/services/data/serde"
 	"fmt"
 	"io"
+	"strings"
 )
 
 type DataService interface {
     List(did int) []connectors.FileLocator
-    Read(fid int) []byte
+    Read(fid string) ([]string, [][]any) 
     Write(did int, name string, size int64, content io.Reader) 
-    Delete(fid int)
+    Delete(fid string)
 }
 
 type DataResource struct {
@@ -20,24 +21,23 @@ type DataResource struct {
 
 func NewSqlite() DataService {
     return &DataResource{
-        connector: connectors.New(&serde.ArrowSerializer{}),
+        connector: connectors.New(&serde.CsvSerializer{}),
     }
 }
 
 func (r *DataResource) Write(did int, name string, size int64, content io.Reader) {
-    fmt.Printf("Writing new file: %s\n", name)
-    r.connector.Write(did, name, size, content)
+    r.connector.Write(did, strings.Split(name, ".")[0], size, content)
 }
 
 func (r *DataResource) List(did int) []connectors.FileLocator {
-    return r.connector.List(r.connector.GetRootDir())
+    return r.connector.List(0)
 }
 
-func (r *DataResource) Read(fid int) []byte {
+func (r *DataResource) Read(fid string) ([]string, [][]any) {
     return r.connector.Read(fid)
 }
 
-func (r *DataResource) Delete(fid int) {
-    fmt.Printf("Deleting file: %d\n", fid)
+func (r *DataResource) Delete(fid string) {
+    fmt.Printf("Deleting file: %s\n", fid)
     r.connector.Delete(fid)
 }

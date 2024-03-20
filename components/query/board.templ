@@ -1,0 +1,56 @@
+package query
+
+import (
+    "fmt"
+    "example/hello/components/preview"
+);
+
+templ Board(fid string, cols []string, rows [][]any) {
+    <div class="container d-flex flex-column align-items-center justify-content-center">
+        <div class="card w-50">
+            <div class="card-body w-100">
+                <h2 class="card-title">Filter</h2>
+                <form
+                    class="d-flex card-text align-items-center"
+                    hx-target="#preview"
+                    hx-post={ string(templ.URL(fmt.Sprintf("/filter/%s", fid)))}
+                >
+                    @filterTypeDropdown()
+                    <span class="ms-2 me-2">all rows where</span>
+                    @colDropdown(cols)
+                    @condDropdown()
+                    <input name="val" type="text" class="form-control" placeholder="value"></input>
+                </form>
+            </div>
+        </div>
+        <div
+            class="w-75"
+        >
+            <div id="preview">
+                @preview.Preview(true, fid, cols, rows)
+            </div>
+        </div>
+    </div>
+}
+
+templ filterTypeDropdown() {
+    <select name="ftype" class="form-select card-text h-100 w-25">
+        <option value="kf" selected>Keep</option>
+        <option value="rf">Remove</option>
+    </select>
+}
+
+templ colDropdown(cols []string) {
+    <select name="col" class="form-select h-100 w-25">
+        <option value={cols[0]} selected>{cols[0]}</option>
+        for _, col := range cols[1:] {
+            <option value={col}>{col}</option>
+        }
+    </select>
+}
+
+templ condDropdown() {
+    <select name="cond" class="form-select h-100 w-25">
+        <option value="ie" selected>=</option>
+    </select>
+}

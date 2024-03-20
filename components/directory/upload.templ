@@ -1,0 +1,10 @@
+package directory
+
+templ Upload(formFileName string) {
+    <form class="m-0" id='form' hx-encoding='multipart/form-data' hx-post='/upload' hx-target="#directory">
+        <div class="input-group">
+            <input class="form-control" type="file" name={ formFileName }></input>
+            <button class="btn btn-outline-success"><i class="bi bi-cloud-arrow-up"></i></button>
+        </div>
+    </form>
+}

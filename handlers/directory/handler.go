@@ -1,53 +1,46 @@
 package directory
 
 import (
-	"example/hello/components"
+	"example/hello/components/directory"
 	"example/hello/services/data"
-	"example/hello/services/data/connectors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-func GetDirectory(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-    dataService := data.NewSqlite()
-    view(w, r,dataService.List(1))
+const ID_PARAM = "id"
+const FORM_FILE_PARAM = "file"
+
+type DirectoryHandler struct {
+    ds data.DataService
 }
 
-func GetContent(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-    dataService := data.NewSqlite()
-    i, err := strconv.Atoi(p.ByName("id"))
-    if err != nil {
-        panic(err)
+func New(ds data.DataService) (*DirectoryHandler) {
+    return &DirectoryHandler{
+    	ds: ds,
     }
-    fmt.Fprint(w, string(dataService.Read(i)))
 }
 
-func DeleteContent(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-    dataService := data.NewSqlite()
-    i, err := strconv.Atoi(p.ByName("id"))
-    if err != nil {
-        panic(err)
-    }
-    dataService.Delete(i)
-    GetDirectory(w, r, p)
+func (h *DirectoryHandler) GetIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+    directory.Directory(FORM_FILE_PARAM).Render(r.Context(), w)
 }
 
-func Upload(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-    dataService := data.NewSqlite()
-    f, handler, err := r.FormFile("file")
+func (h *DirectoryHandler) GetFileList(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+    directory.DirectoryPostLoad(h.ds.List(1)).Render(r.Context(), w)
+}
+
+func (h *DirectoryHandler) DeleteFile(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+    h.ds.Delete(p.ByName(ID_PARAM))
+    h.GetFileList(w, r, p)
+}
+
+func (h *DirectoryHandler) Upload(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+    f, handler, err := r.FormFile(FORM_FILE_PARAM)
+    defer h.GetFileList(w, r, p)
     if err != nil {
-        http.Error(w, "Error retrieving file", http.StatusBadRequest)
         return
     }
     defer f.Close()
 
-    dataService.Write(1, handler.Filename, handler.Size, f)
-    GetDirectory(w, r, p)
-}
-
-func view(w http.ResponseWriter, r *http.Request, locators []connectors.FileLocator) {
-    components.Directory(locators).Render(r.Context(), w)
+    h.ds.Write(1, handler.Filename, handler.Size, f)
 }

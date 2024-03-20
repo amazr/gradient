@@ -1,0 +1,58 @@
+package directory 
+
+import (
+    "fmt"
+    "example/hello/services/data/connectors"
+);
+
+templ Directory(formFileParam string) {
+    <div id="page" class="container d-flex flex-column align-items-center justify-content-center">
+        <div class="d-flex justify-content-between align-items-center w-75 mt-4 pb-3 border-bottom">
+            <h1>Gradient</h1>
+            @Upload(formFileParam)
+        </div>
+        <div id="directory" class="w-75" hx-get="/directory" hx-trigger="load" hx-swap="innerHTML"></div>
+    </div>
+}
+
+templ DirectoryPostLoad(locators []connectors.FileLocator) {
+    <ul class="list-group list-group-flush">
+        for _, locator := range locators {
+            <li class="list-group-item d-flex align-items-center justify-content-between">
+                <div
+                    class="w-100"
+                    style="cursor: pointer;"
+                    hx-trigger="click"
+                    hx-swap="outerHTML"
+                    hx-target="#page"
+                    hx-push-url="true"
+                    hx-replace-url="true"
+                    hx-get={ string(templ.URL(fmt.Sprintf("/content/%s", locator.Id)))}
+                >
+                    { locator.Name }
+                </div>
+                <div class="w-25 d-flex justify-content-end">
+                    <button
+                        class="btn btn-outline-dark me-2"
+                        hx-trigger="click"
+                        hx-swap="outerHTML"
+                        hx-target="#page"
+                        hx-push-url="true"
+                        hx-replace-url="true"
+                        hx-get={ string(templ.URL(fmt.Sprintf("/board/%s", locator.Id)))}
+                    >
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </button>
+                    <button
+                        class="btn btn-outline-danger"
+                        hx-trigger="click"
+                        hx-target="#directory"
+                        hx-delete={ string(templ.URL(fmt.Sprintf("/content/%s", locator.Id)))}
+                    >
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                </div>
+            </li>
+        }
+    </ul>
+}
